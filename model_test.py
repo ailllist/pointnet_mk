@@ -45,7 +45,7 @@ class PointNet(nn.Module):
 
 if __name__ == "__main__":
     model = PointNet(40, num_of_points=512, is_training=False)
-    model.load_state_dict(torch.load("model_3_27_20_18.pth"))
+    model.load_state_dict(torch.load("model_3_27_21_57.pth"))
 
     test_data = DataLoader(ModelNet40("test", 1024, 50))
 

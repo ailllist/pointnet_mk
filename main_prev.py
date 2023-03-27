@@ -40,12 +40,13 @@ class PointNet(nn.Module):
         x = x.view(-1, 1024)  # TODO Need to understand
 
         x = F.relu(self.bn4(self.fc1(x)))
-        x = F.dropout(x, 0.7, training=self.is_training)
+        x = F.dropout(x, 0.1, training=self.is_training)
         x = F.relu(self.bn5(self.fc2(x)))
-        x = F.dropout(x, 0.7, training=self.is_training)
+        x = F.dropout(x, 0.1, training=self.is_training)
         x = self.fc3(x)
 
         return x
+
 
 def train(dataloader, model, optimizer):
     size = len(dataloader.dataset)
@@ -54,16 +55,19 @@ def train(dataloader, model, optimizer):
     for i, data in enumerate(dataloader):
         points, target = data
 
-        batch, label = points.to(device), target.to(device)
-        batch = batch.permute(0, 2, 1)
-        pred = model(batch)
-        label = label.squeeze(1)
+        for batch, label in zip(points, target):
+            batch, label = batch.to(device), label.to(device)
+            # print(batch.shape, label.shape)
+            batch = batch.permute(0, 2, 1)
+            pred = model(batch)
+            label = label.squeeze(1)
+            print(pred.shape, label.shape)
+            # breakpoint()
+            loss = F.nll_loss(F.log_softmax(pred), label)
 
-        loss = F.nll_loss(F.log_softmax(pred), label)
-
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
         if i % 10 == 0:
             loss, current = loss.item(), i * len(points)
@@ -80,30 +84,31 @@ def test(dataloader, model, epoch):
         for data in dataloader:
             points, target = data
 
-            batch, label = points.to(device), target.to(device)
-            batch = batch.permute(0, 2, 1)
-            pred = model(batch)
+            for batch, label in zip(points, target):
+                batch, label = batch.to(device), label.to(device)
+                print(batch.shape, label.shape)
+                batch = batch.permute(0, 2, 1)
+                pred = model(batch)
+                label = label.squeeze(1)
 
-            label = label.squeeze(1)
-            test_loss += F.nll_loss(F.log_softmax(pred), label)
+                test_loss += F.nll_loss(F.log_softmax(pred), label)
 
-            predicted = pred.argmax(1)
+                predicted = pred.argmax(1)
+                correct += (predicted == label).type(torch.float).sum().item()
 
-            correct += (predicted == label).type(torch.float).sum().item()
-
-        test_loss /= num_batches
-        correct /= size
+                test_loss /= num_batches
+                correct /= size
 
     print(f"Test Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
     return 100 * correct, test_loss
 
-num_points = 1
+num_points = 1024
 # dcp는 default가 False, classification을 위해서는 True를 해야된다.
-batch_size = 512
-test_batch_size = 128
-epoch = 100
-train_num_of_object = -1
-test_num_of_object = -1
+batch_size = 1
+test_batch_size = 1
+epoch = 20
+train_num_of_object = 400
+test_num_of_object = 100
 
 if __name__ == "__main__":
 
