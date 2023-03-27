@@ -45,9 +45,9 @@ class PointNet(nn.Module):
 
 if __name__ == "__main__":
     model = PointNet(40, num_of_points=512, is_training=False)
-    model.load_state_dict(torch.load("model.pth"))
+    model.load_state_dict(torch.load("model_3_27_20_18.pth"))
 
-    test_data = DataLoader(ModelNet40("test", 512, 5))
+    test_data = DataLoader(ModelNet40("test", 1024, 50))
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     device = torch.device(device)
@@ -58,10 +58,9 @@ if __name__ == "__main__":
 
     with torch.no_grad():
         for pcls, lbls in test_data:
-            pcls, lbls = pcls.squeeze(), lbls.squeeze()
             pcls = pcls.permute(0, 2, 1)
             pcls, lbls = pcls.to(device), lbls.to(device)
             pred = model(pcls)
 
-        for num, i in enumerate(pred):
-            print(f"predicted: {i.argmax(0)}, Ground Truth: {lbls[num]}")
+            for num, i in enumerate(pred):
+                print(f"predicted: {i.argmax(0)}, Ground Truth: {lbls[num]}")
