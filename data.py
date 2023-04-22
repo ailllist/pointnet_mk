@@ -57,4 +57,5 @@ if __name__ == "__main__":
     train_data = ModelNet40("train")
     test_data = ModelNet40("test")
     print(len(train_data))
+    print(len(test_data))
     print(set(i[0] for i in test_data.label))
